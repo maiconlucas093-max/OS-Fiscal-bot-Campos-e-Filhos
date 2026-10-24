@@ -1,0 +1,356 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#160b0c">
+  <meta name="description" content="Painel de gestão de funcionários, ordens de serviço e documentos da Campos e Filhos.">
+  <title>OS Fiscal Bot | Campos e Filhos</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <section id="loginScreen" class="login-screen" aria-labelledby="loginTitle">
+    <form id="loginForm" class="login-card" novalidate>
+      <div class="login-brand-mark" aria-hidden="true">CF</div>
+      <p class="login-eyebrow">CAMPOS E FILHOS</p>
+      <h1 id="loginTitle">Criar acesso local</h1>
+      <p id="loginDescription">Cadastre seu e-mail e sua senha para acessar o OS Fiscal Bot neste navegador.</p>
+      <label for="loginEmail">E-mail</label>
+      <input id="loginEmail" name="email" type="email" autocomplete="username" placeholder="voce@exemplo.com" required>
+      <label for="loginPassword">Senha</label>
+      <input id="loginPassword" name="password" type="password" autocomplete="new-password" minlength="8" placeholder="Pelo menos 8 caracteres" required>
+      <button id="loginSubmit" class="btn btn-primary login-submit" type="submit">Criar acesso e entrar</button>
+      <p id="loginError" class="login-error" role="alert" hidden></p>
+      <p class="login-disclaimer">Acesso local deste navegador. Não é uma autenticação online nem protege contra alguém com acesso técnico ao aparelho.</p>
+    </form>
+  </section>
+
+  <div id="appContent" hidden>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-photo-wrap">
+        <button class="brand-mark" id="profilePhotoButton" type="button" title="Toque para adicionar ou trocar a foto do encarregado" aria-label="Adicionar ou trocar foto do encarregado">
+          <span id="brandInitials">CF</span>
+          <img id="brandPhoto" alt="Foto do encarregado" hidden>
+        </button>
+        <input id="profilePhotoInput" type="file" accept="image/*" hidden>
+        <button id="removeProfilePhoto" class="remove-profile-photo" type="button" title="Remover foto e voltar para CF" aria-label="Remover foto" hidden>×</button>
+      </div>
+      <div>
+        <h1>OS Fiscal Bot</h1>
+        <p>Campos e Filhos · Painel do encarregado</p>
+      </div>
+    </div>
+    <div class="topbar-actions"><span class="status"><span class="status-dot"></span> Controle de OS</span><button class="btn btn-secondary btn-small" id="logoutButton" type="button">Sair</button></div>
+  </header>
+
+  <main class="container">
+    <section class="welcome">
+      <div>
+        <p class="eyebrow">GESTÃO OPERACIONAL</p>
+        <h2>Controle suas operações.</h2>
+        <p>Funcionários, ordens de serviço e documentos em um só lugar.</p>
+      </div>
+      <button class="btn btn-primary" id="newOrderTop">+ Nova OS</button>
+    </section>
+
+    <section class="stats-grid" aria-label="Resumo">
+      <article class="stat-card">
+        <span>Funcionários ativos</span>
+        <strong id="statEmployees">0</strong>
+        <small>Cadastros ativos</small>
+      </article>
+      <article class="stat-card">
+        <span>OS de hoje</span>
+        <strong id="statToday">0</strong>
+        <small>Ordens registradas</small>
+      </article>
+      <article class="stat-card">
+        <span>OS pendentes</span>
+        <strong id="statPending">0</strong>
+        <small>Precisam de conclusão</small>
+      </article>
+      <article class="stat-card">
+        <span>OS completas</span>
+        <strong id="statComplete">0</strong>
+        <small>Assinatura e fotos conferidas</small>
+      </article>
+    </section>
+
+    <nav class="tabs" aria-label="Seções do painel">
+      <button class="tab active" data-tab="dashboard">Visão geral</button>
+      <button class="tab" data-tab="employees">Funcionários</button>
+      <button class="tab" data-tab="orders">Ordens de serviço</button>
+      <button class="tab" data-tab="tracking">Rastreamento de OS</button>
+      <button class="tab" data-tab="scanner">Escanear OS</button>
+      <button class="tab" data-tab="files">Anexos</button>
+      <button class="tab" data-tab="activity">Histórico</button>
+    </nav>
+
+    <section class="tab-panel" id="panel-dashboard">
+      <div class="section-heading">
+        <div>
+          <h2>Visão geral</h2>
+          <p>Acompanhe os registros e os lembretes operacionais.</p>
+        </div>
+        <button class="btn btn-secondary" id="enableNotifications">Ativar notificações</button>
+      </div>
+
+      <div class="two-column">
+        <article class="panel">
+          <h3>Lembretes da operação</h3>
+          <div class="reminder">
+            <div class="reminder-time">08:00</div>
+            <div><strong>Conferência da manhã</strong><p>Verifique as equipes e as OS previstas para hoje.</p></div>
+          </div>
+          <div class="reminder">
+            <div class="reminder-time">16:30</div>
+            <div><strong>Conferência de encerramento</strong><p>Confira assinaturas, fotos e serviços pendentes.</p></div>
+          </div>
+          <p class="notice">Os lembretes deste painel dependem de ele estar aberto. Notificações e envio automático em segundo plano não são garantidos nesta versão local.</p>
+        </article>
+        <article class="panel">
+          <h3>Ações rápidas</h3>
+          <button class="action-row" data-goto="employees"><span class="action-icon">＋</span><span><strong>Cadastrar funcionário</strong><small>Adicionar integrante da equipe</small></span><span>›</span></button>
+          <button class="action-row" data-goto="orders"><span class="action-icon">▤</span><span><strong>Consultar ordens de serviço</strong><small>Pesquisar e atualizar OS</small></span><span>›</span></button>
+          <button class="action-row" data-goto="files"><span class="action-icon">⌕</span><span><strong>Consultar anexos</strong><small>Fotos e documentos registrados</small></span><span>›</span></button>
+          <button class="action-row" id="morningMessages"><span class="action-icon">↗</span><span><strong>Preparar mensagens</strong><small>Abrir WhatsApp para envio manual</small></span><span>›</span></button>
+        </article>
+      </div>
+
+      <article class="panel recent-panel">
+        <div class="section-heading compact">
+          <div><h3>Ordens recentes</h3><p>Últimas OS cadastradas.</p></div>
+          <button class="btn btn-secondary btn-small" data-goto="orders">Ver todas</button>
+        </div>
+        <div id="recentOrders" class="table-wrap"></div>
+      </article>
+    </section>
+
+    <section class="tab-panel hidden" id="panel-employees">
+      <div class="section-heading">
+        <div><h2>Funcionários</h2><p>Cadastre, pesquise e gerencie sua equipe.</p></div>
+        <button class="btn btn-primary" id="newEmployee">+ Funcionário</button>
+      </div>
+
+      <form id="employeeForm" class="panel form-panel hidden">
+        <div class="section-heading compact">
+          <div><h3 id="employeeFormTitle">Novo funcionário</h3><p>Preencha os dados abaixo.</p></div>
+          <button type="button" class="btn btn-secondary btn-small" id="cancelEmployee">Cancelar</button>
+        </div>
+        <input type="hidden" id="employeeId">
+        <div class="form-grid">
+          <label>Nome completo *
+            <input id="employeeName" required maxlength="100" placeholder="Nome do funcionário">
+          </label>
+          <label>WhatsApp / telefone
+            <input id="employeePhone" inputmode="tel" maxlength="20" placeholder="(31) 99999-9999">
+          </label>
+          <label>Função *
+            <select id="employeeRole" required>
+              <option value="">Selecione</option>
+              <option>Pintor</option><option>Pedreiro</option>
+              <option>Eletricista</option><option>Encanador</option>
+              <option>Serviços gerais</option><option>Outro</option>
+            </select>
+          </label>
+          <label>Local de trabalho
+            <input id="employeeLocation" maxlength="150" placeholder="Obra ou endereço">
+          </label>
+          <label class="full-width">Observações
+            <textarea id="employeeNotes" rows="3" maxlength="1000" placeholder="Informações adicionais"></textarea>
+          </label>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" type="submit">Salvar funcionário</button>
+        </div>
+      </form>
+
+      <div class="toolbar">
+        <input id="employeeSearch" type="search" placeholder="Buscar por nome, função ou local">
+        <select id="employeeFilter" aria-label="Filtrar funcionários">
+          <option value="active">Funcionários ativos</option>
+          <option value="all">Todos os funcionários</option>
+          <option value="archived">Arquivados</option>
+        </select>
+      </div>
+      <div id="employeeList" class="card-list"></div>
+    </section>
+
+    <section class="tab-panel hidden" id="panel-orders">
+      <div class="section-heading">
+        <div><h2>Ordens de serviço</h2><p>Registre atividades e acompanhe sua conclusão.</p></div>
+        <button class="btn btn-primary" id="newOrder">+ Nova OS</button>
+      </div>
+
+      <form id="orderForm" class="panel form-panel hidden">
+        <div class="section-heading compact">
+          <div><h3 id="orderFormTitle">Nova ordem de serviço</h3><p>Os campos com * são obrigatórios.</p></div>
+          <button type="button" class="btn btn-secondary btn-small" id="cancelOrder">Cancelar</button>
+        </div>
+        <input type="hidden" id="orderId">
+        <div class="form-grid">
+          <label>Funcionário *
+            <select id="orderEmployee" required></select>
+          </label>
+          <label>Data da atividade *
+            <input id="orderDate" type="date" required>
+          </label>
+          <label class="full-width">Descrição do serviço *
+            <textarea id="orderDescription" rows="3" required maxlength="2000" placeholder="Descreva o serviço realizado ou planejado"></textarea>
+          </label>
+          <label class="full-width">Local do serviço
+            <input id="orderLocation" maxlength="200" placeholder="Endereço ou identificação da obra">
+          </label>
+          <div class="full-width checklist">
+            <p class="checklist-title">Conferência da OS</p>
+            <label class="check-row"><input type="checkbox" id="orderSigned"> OS assinada / conferida</label>
+            <label class="check-row"><input type="checkbox" id="orderBefore"> Foto do antes anexada</label>
+            <label class="check-row"><input type="checkbox" id="orderAfter"> Foto do depois anexada</label>
+          </div>
+          <label class="full-width">Observações
+            <textarea id="orderNotes" rows="3" maxlength="1500" placeholder="Pendências ou observações"></textarea>
+          </label>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" type="submit">Salvar OS</button>
+        </div>
+      </form>
+
+      <div class="toolbar">
+        <input id="orderSearch" type="search" placeholder="Buscar por funcionário, serviço ou local">
+        <select id="orderStatusFilter" aria-label="Filtrar situação">
+          <option value="all">Todas as situações</option>
+          <option value="pending">Pendentes</option>
+          <option value="complete">Completas</option>
+        </select>
+        <input id="orderDateFilter" type="date" aria-label="Filtrar por data">
+      </div>
+      <div id="orderList" class="card-list"></div>
+    </section>
+
+    <section class="tab-panel hidden" id="panel-tracking">
+      <div class="section-heading">
+        <div><h2>Rastreamento de OS</h2><p>Confirme recebimento, registre movimentações e gere QR Codes para as OS impressas.</p></div>
+        <button class="btn btn-secondary" id="refreshTracking" type="button">Atualizar</button>
+      </div>
+      <div class="notice tracking-notice" id="trackingConnectionNotice">Modo local: o rastreamento funciona neste aparelho. Configure o Supabase para compartilhar os dados entre aparelhos e ativar alertas automáticos.</div>
+      <div class="stats-grid tracking-stats">
+        <article class="stat-card"><span>Aguardando recebimento</span><strong id="trackWaiting">0</strong><small>Sem confirmação do funcionário</small></article>
+        <article class="stat-card"><span>Em execução</span><strong id="trackProgress">0</strong><small>Serviço iniciado</small></article>
+        <article class="stat-card"><span>Concluídas</span><strong id="trackDone">0</strong><small>Finalizadas pelo funcionário</small></article>
+        <article class="stat-card"><span>Com atraso</span><strong id="trackLate">0</strong><small>Prazo ultrapassado</small></article>
+      </div>
+      <div class="panel qr-panel">
+        <div><h3>Consultar ou atualizar uma OS pelo QR Code</h3><p>Leia o código da folha impressa com a câmera do celular ou cole o link/código da OS.</p></div>
+        <form id="trackingLookupForm" class="tracking-lookup"><input id="trackingLookup" placeholder="Código ou link da OS" aria-label="Código ou link da OS" required><button class="btn btn-primary" type="submit">Localizar OS</button></form>
+        <div id="trackingQrResult" class="tracking-qr-result hidden"></div>
+      </div>
+      <div class="toolbar"><input id="trackingSearch" type="search" placeholder="Buscar OS, funcionário ou serviço"><select id="trackingStatusFilter" aria-label="Filtrar rastreamento"><option value="all">Todos os status</option><option value="waiting">Aguardando recebimento</option><option value="received">Recebida</option><option value="progress">Em execução</option><option value="done">Concluída</option><option value="late">Atrasada</option></select></div>
+      <div id="trackingList" class="card-list"></div>
+      <div class="panel"><h3>Histórico de movimentações</h3><p>Registro local de recebimentos, inícios, conclusões e transferências.</p><div id="trackingHistory" class="activity-list"></div></div>
+    </section>
+
+    <section class="tab-panel hidden" id="panel-scanner">
+      <div class="section-heading">
+        <div><h2>Escanear ordem de serviço</h2><p>Fotografe uma OS em papel, confira a imagem e gere um PDF para compartilhar.</p></div>
+      </div>
+      <div class="panel scanner-panel">
+        <div class="scanner-controls">
+          <label> Câmera
+            <select id="scannerCameraFacing" aria-label="Escolher câmera">
+              <option value="environment" selected>Traseira</option>
+              <option value="user">Frontal</option>
+            </select>
+          </label>
+          <label>Vincular à OS (opcional)
+            <select id="scannerOrderSelect"><option value="">Não vincular agora</option></select>
+          </label>
+        </div>
+        <div class="scanner-actions">
+          <button class="btn btn-primary" type="button" id="scannerStart">Abrir câmera</button>
+          <button class="btn btn-secondary" type="button" id="scannerCapture" disabled>Fotografar OS</button>
+          <label class="btn btn-secondary scanner-file-label" for="scannerFile">Escolher foto</label>
+          <input id="scannerFile" type="file" accept="image/*" capture="environment" hidden>
+          <button class="btn btn-secondary" type="button" id="scannerStop" disabled>Fechar câmera</button>
+        </div>
+        <div id="scannerCameraWrap" class="scanner-camera-wrap hidden">
+          <video id="scannerVideo" autoplay playsinline muted aria-label="Prévia da câmera"></video>
+        </div>
+        <canvas id="scannerCanvas" hidden></canvas>
+        <div id="scannerPreviewWrap" class="scanner-preview-wrap hidden">
+          <h3>Pré-visualização da OS</h3>
+          <img id="scannerPreview" alt="Pré-visualização da ordem de serviço escaneada">
+          <div class="scanner-actions">
+            <button class="btn btn-secondary" type="button" id="scannerRetake">Escolher outra imagem</button>
+            <button class="btn btn-primary" type="button" id="scannerMakePdf">Gerar PDF</button>
+          </div>
+        </div>
+        <p id="scannerStatus" class="notice" role="status" aria-live="polite">Escolha a câmera traseira ou frontal e toque em “Abrir câmera”.</p>
+        <div class="scanner-actions">
+          <button class="btn btn-primary" type="button" id="scannerDownload" disabled>Baixar PDF</button>
+          <button class="btn btn-secondary" type="button" id="scannerShare" disabled>Compartilhar PDF</button>
+          <button class="btn btn-secondary" type="button" id="scannerAttach" disabled>Salvar como anexo da OS</button>
+          <button class="btn btn-whatsapp" type="button" id="scannerWhatsApp" disabled>Enviar pelo WhatsApp</button>
+        </div>
+        <p class="muted scanner-help">A câmera exige permissão e normalmente funciona em HTTPS (GitHub Pages) ou numa prévia segura do editor. O WhatsApp abre a conversa; se o compartilhamento de arquivo não abrir, baixe o PDF e anexe-o manualmente. Os dados continuam armazenados localmente neste navegador.</p>
+      </div>
+    </section>
+
+    <section class="tab-panel hidden" id="panel-files">
+      <div class="section-heading">
+        <div><h2>Anexos</h2><p>Associe fotos e documentos a uma ordem de serviço.</p></div>
+      </div>
+      <form id="attachmentForm" class="panel form-panel">
+        <div class="form-grid">
+          <label>Ordem de serviço *
+            <select id="attachmentOrder" required></select>
+          </label>
+          <label>Tipo de anexo *
+            <select id="attachmentType" required>
+              <option value="before">Foto do antes</option>
+              <option value="after">Foto do depois</option>
+              <option value="document">Documento / outro</option>
+            </select>
+          </label>
+          <label class="full-width">Arquivo (imagem ou PDF, até 1 MB) *
+            <input id="attachmentFile" type="file" accept="image/*,application/pdf" required>
+          </label>
+        </div>
+        <p class="notice">Os arquivos ficam no armazenamento local deste navegador. Evite anexos confidenciais em aparelhos compartilhados.</p>
+        <div class="form-actions"><button class="btn btn-primary" type="submit">Salvar anexo</button></div>
+      </form>
+      <div class="toolbar">
+        <input id="attachmentSearch" type="search" placeholder="Buscar anexos por OS, funcionário ou arquivo">
+      </div>
+      <div id="attachmentList" class="card-list"></div>
+    </section>
+
+    <section class="tab-panel hidden" id="panel-activity">
+      <div class="section-heading">
+        <div><h2>Histórico de atividades</h2><p>Registro das ações realizadas neste painel.</p></div>
+        <button class="btn btn-secondary" id="exportData">Exportar backup JSON</button>
+      </div>
+      <div class="panel">
+        <p class="notice">O backup contém os dados locais, inclusive informações pessoais e anexos. Guarde-o em local seguro.</p>
+        <div id="activityList" class="activity-list"></div>
+      </div>
+    </section>
+
+    <footer>
+      <p><strong>OS Fiscal Bot</strong> · Campos e Filhos</p>
+      <p>Versão local — os dados ficam neste navegador até serem apagados ou exportados.</p>
+    </footer>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  </div><!-- /appContent -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+  <script src="config.js" defer></script>
+  <script src="script.js" defer></script>
+  <script src="tracking.js" defer></script>
+</body>
+</html>
