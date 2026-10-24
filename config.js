@@ -2,7 +2,7 @@
 /* Configuração do OS Fiscal Bot */
 window.OSF_CONFIG = {
   supabaseUrl: "https://jswyxqxtgyjxzkgscioo.supabase.co",
-  supabaseAnonKey: "COLE_AQUI_SUA_CHAVE_PUBLICA",
+  supabaseAnonKey: "sb_publishable_WjX9LByNvbcucs9hwzySZQ_c0cP8-3k",
   appUrl: "https://maiconlucas093-max.github.io/OS-Fiscal-bot-Campos-e-Filhos/",
   whatsappFunctionUrl: "",
   receiveAlertMinutes: 15
