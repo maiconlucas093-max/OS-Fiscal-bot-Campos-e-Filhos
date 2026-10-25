@@ -1362,7 +1362,7 @@ checkSchedule();
     const hasAccount = Boolean(readAccount());
     if (cloudConfigured) {
       byId("loginTitle").textContent = "Acessar o OS Fiscal Bot";
-      byId("loginDescription").textContent = "Entre com sua conta da empresa. Se ainda não tiver cadastro, o sistema poderá criar um acesso inicial.";
+  byId("loginDescription").textContent = "Entre com seu e-mail e sua senha cadastrados.";
       byId("loginPassword").autocomplete = "current-password";
       byId("loginPassword").placeholder = "Pelo menos 8 caracteres";
       byId("loginSubmit").textContent = "Entrar / criar conta";
