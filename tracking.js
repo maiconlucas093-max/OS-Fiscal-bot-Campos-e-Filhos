@@ -200,8 +200,23 @@
     },
     async onLogin() {
       if (!cloudConfigured()) { currentRole='manager'; $('trackingConnectionNotice').textContent='Modo local: os dados continuam neste navegador. Configure config.js e o SQL do Supabase para compartilhar entre aparelhos.'; render(); return; }
-      const c=client();
-      const {data:profile,error}=await c.from('osfiscal_profiles').select('role,employee_legacy_id,display_name').single();
+      
+const c = client();
+const { data: authData, error: authError } = await c.auth.getUser();
+
+if (authError || !authData?.user?.id) {
+  $('trackingConnectionNotice').textContent =
+    'Não foi possível identificar a sessão autenticada. Entre novamente.';
+  render();
+  return;
+}
+
+const { data: profile, error } = await c
+  .from('osfiscal_profiles')
+  .select('role,employee_legacy_id,display_name')
+  .eq('id', authData.user.id)
+  .single();
+  
       if(error) { $('trackingConnectionNotice').textContent='Login online ativo, mas falta configurar seu perfil em osfiscal_profiles no Supabase.'; currentRole='employee'; render(); return; }
       window.osfiscalProfile=profile; currentRole=profile.role || 'employee';
       $('trackingConnectionNotice').textContent=`Conectado à base compartilhada · Perfil: ${currentRole}.`;
