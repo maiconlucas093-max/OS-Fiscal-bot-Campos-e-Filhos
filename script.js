@@ -1365,7 +1365,7 @@ checkSchedule();
   byId("loginDescription").textContent = "Entre com seu e-mail e sua senha cadastrados.";
       byId("loginPassword").autocomplete = "current-password";
       byId("loginPassword").placeholder = "Pelo menos 8 caracteres";
-      byId("loginSubmit").textContent = "Entrar / criar conta";
+      byId("loginSubmit").textContent = "Entrar";
       byId("loginScreen").querySelector(".login-disclaimer").textContent = "Acesso pela autenticação online. O administrador deve atribuir o perfil e vincular cada funcionário.";
       return;
     }
