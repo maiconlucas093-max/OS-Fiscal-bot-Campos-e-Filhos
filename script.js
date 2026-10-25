@@ -1414,11 +1414,11 @@ checkSchedule();
         if (!window.supabase || !window.supabase.createClient) throw new Error("Biblioteca de conexão indisponível. Verifique a internet e recarregue a página.");
         const client = window.osfiscalSupabase || (window.osfiscalSupabase = window.supabase.createClient(window.OSF_CONFIG.supabaseUrl, window.OSF_CONFIG.supabaseAnonKey));
         let result = await client.auth.signInWithPassword({ email, password });
-        if (result.error) {
-          const signup = await client.auth.signUp({ email, password });
-          if (signup.error) throw new Error("Não foi possível entrar ou criar conta: " + signup.error.message);
-          if (!signup.data.session) throw new Error("Conta criada. Confirme o e-mail recebido e depois entre novamente.");
-        }
+        
+if (result.error) {
+  throw new Error("E-mail ou senha incorretos. Verifique seus dados ou solicite o cadastro ao administrador.");
+}
+        
         window.osfiscalUser = (await client.auth.getUser()).data.user;
         showApp();
         if (window.OSFiscalTracking && window.OSFiscalTracking.onLogin) await window.OSFiscalTracking.onLogin();
