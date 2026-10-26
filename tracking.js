@@ -88,8 +88,7 @@
       if (currentRole === 'employee') {
         const { data: cloudOrders, error: orderErr } = await client().from('osfiscal_orders').select('legacy_id,employee_legacy_id,status,tracking_token,legacy_payload,updated_at');
         if (orderErr) throw orderErr;
-        const { data: cloudEmployees, error: empErr } = await client().from('osfiscal_employees').select('legacy_id,name,role_name,phone,active');
-        if (empErr) throw empErr;
+        const { data: cloudEmployees, error: empErr } = await client().from('osfiscal_employees').select('legacy_id,name,role_name,phone,active,updated_at');
         for (const ce of (cloudEmployees || [])) {
           const idx = data.employees.findIndex(e => String(e.id) === String(ce.legacy_id));
           const mapped = { id:ce.legacy_id, name:ce.name, role:ce.role_name||'', phone:ce.phone||'', active:ce.active };
