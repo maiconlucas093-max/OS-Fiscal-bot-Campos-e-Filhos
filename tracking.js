@@ -197,12 +197,16 @@
         }
       }
 
-      // 4. Enviar funcionários locais e recuperados para a nuvem.
+      
       const employees = data.employees.map(e => ({
         legacy_id: String(e.id),
         name: e.name || 'Sem nome',
         role_name: e.role || '',
         phone: e.phone || '',
+        active: Boolean(e.active),
+        updated_at: e.updatedAt || new Date().toISOString()
+      }));
+       
         active: Boolean(e.active)
       }));
 
