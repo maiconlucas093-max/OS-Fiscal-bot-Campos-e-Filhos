@@ -277,13 +277,7 @@
         if (error) throw error;
       }
        
-       {
-        const { error } = await client()
-          .from('osfiscal_orders')
-          .upsert(orders, { onConflict: 'legacy_id' });
-
-        if (error) throw error;
-      }
+       
 
       // 6. Atualizar o histórico de movimentações.
       const { data: evts, error: evErr } = await client()
