@@ -207,8 +207,7 @@
         updated_at: e.updatedAt || new Date().toISOString()
       }));
        
-        active: Boolean(e.active)
-      }));
+        
 
       if (employees.length) {
         const { error } = await client()
