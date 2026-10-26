@@ -756,8 +756,8 @@ document.addEventListener("click", async (event) => {
 
   if (button.dataset.deleteOrder) {
     const order = getOrder(button.dataset.deleteOrder);
-    if (button.dataset.deleteOrder) {
-    const order = getOrder(button.dataset.deleteOrder);
+    
+    
     if (!order) return;
 
     const attachments = getOrderAttachments(order.id);
