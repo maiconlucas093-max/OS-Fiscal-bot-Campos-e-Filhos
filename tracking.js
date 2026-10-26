@@ -251,11 +251,16 @@
       ensureTrackingData();
       originalSave();
       render();
-
       $('trackingConnectionNotice').textContent =
         `Conectado à base compartilhada. Sincronização concluída: ${(cloudOrders || []).length} OS recuperadas da nuvem; ${data.orders.length} OS disponíveis no painel.`;
-           
+
+    } finally {
+      cloudSyncing = false;
+    }
   }
+
+  function getQrUrl(order) { return orderLink(order); }
+
   function getQrUrl(order) { return orderLink(order); }
   function showQr(order) {
     currentQrOrder = order;
