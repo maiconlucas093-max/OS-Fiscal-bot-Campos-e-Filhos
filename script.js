@@ -704,7 +704,7 @@ async function printOrderWithQr(orderId) {
 
 /* Ações nos cartões */
 
-document.addEventListener("click", (event) => {
+document.addEventListener("click", async (event) => {
   const button = event.target.closest("button");
   if (!button) return;
 
