@@ -756,17 +756,106 @@ document.addEventListener("click", async (event) => {
 
   if (button.dataset.deleteOrder) {
     const order = getOrder(button.dataset.deleteOrder);
+    if (button.dataset.deleteOrder) {
+    const order = getOrder(button.dataset.deleteOrder);
     if (!order) return;
 
-    const attachmentCount = getOrderAttachments(order.id).length;
-    const message = `Excluir esta OS e seus ${attachmentCount} anexo(s)? Esta ação não pode ser desfeita.`;
+    const attachments = getOrderAttachments(order.id);
+    const message =
+      `Excluir esta OS e seus ${attachments.length} anexo(s)? ` +
+      "Esta ação não pode ser desfeita.";
 
-    if (confirm(message)) {
-      data.orders = data.orders.filter((item) => item.id !== order.id);
-      data.attachments = data.attachments.filter((item) => item.orderId !== order.id);
-      logActivity(`OS excluída: ${employeeName(order.employeeId)} — ${formatDate(order.date)}`);
-      persistAndRender("OS e anexos relacionados excluídos.");
+    if (!confirm(message)) return;
+
+    const config = window.OSF_CONFIG || {};
+    const cloudClient = window.osfiscalSupabase;
+
+    const cloudConfigured = Boolean(
+      config.supabaseUrl &&
+      config.supabaseAnonKey &&
+      cloudClient
+    );
+
+    if (cloudConfigured) {
+      if (window.osfiscalProfile?.role !== "manager") {
+        showToast(
+          "Entre com o perfil gerente para excluir uma OS sincronizada."
+        );
+        return;
+      }
+
+      button.disabled = true;
+
+      try {
+        const { data: deletedRows, error } = await cloudClient
+          .from("osfiscal_orders")
+          .delete()
+          .eq("legacy_id", String(order.id))
+          .select("legacy_id");
+
+        if (error) {
+          throw error;
+        }
+
+        if (!Array.isArray(deletedRows)) {
+          throw new Error(
+            "Não foi possível confirmar a exclusão na nuvem."
+          );
+        }
+
+        if (deletedRows.length === 0) {
+          const {
+            data: existingOrder,
+            error: readError
+          } = await cloudClient
+            .from("osfiscal_orders")
+            .select("legacy_id")
+            .eq("legacy_id", String(order.id))
+            .maybeSingle();
+
+          if (readError) {
+            throw readError;
+          }
+
+          if (existingOrder) {
+            throw new Error(
+              "A OS continua na nuvem. Verifique as permissões."
+            );
+          }
+        }
+      } catch (error) {
+        console.error(
+          "Falha ao excluir OS na nuvem:",
+          error
+        );
+
+        showToast(
+          "Não foi possível confirmar a exclusão na nuvem. " +
+          "A OS foi mantida no painel."
+        );
+
+        return;
+      } finally {
+        button.disabled = false;
+      }
     }
+
+    data.orders = data.orders.filter(
+      (item) => String(item.id) !== String(order.id)
+    );
+
+    data.attachments = data.attachments.filter(
+      (item) => String(item.orderId) !== String(order.id)
+    );
+
+    logActivity(
+      `OS excluída: ${employeeName(order.employeeId)} — ` +
+      `${formatDate(order.date)}`
+    );
+
+    persistAndRender(
+      "OS e anexos relacionados excluídos."
+    );
   }
 
   if (button.dataset.deleteAttachment) {
