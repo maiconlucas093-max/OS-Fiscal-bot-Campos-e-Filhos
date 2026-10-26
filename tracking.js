@@ -156,13 +156,33 @@
       }
        
 
-      // 3. Incorporar as OS da nuvem, sem duplicar identificadores.
+      
+
+      // 3. Incorporar as OS da nuvem sem apagar conferências locais mais recentes.
       for (const co of (cloudOrders || [])) {
         const payload =
           co.legacy_payload &&
           typeof co.legacy_payload === 'object'
             ? co.legacy_payload
             : {};
+
+        const idx = data.orders.findIndex(
+          o => String(o.id) === String(co.legacy_id)
+        );
+
+        const localOrder = idx >= 0 ? data.orders[idx] : null;
+        const localTime = Math.max(
+          Date.parse(localOrder?.updatedAt || '') || 0,
+          Date.parse(localOrder?.trackingUpdatedAt || '') || 0
+        );
+        const cloudTime = Math.max(
+          Date.parse(co.updated_at || '') || 0,
+          Date.parse(payload.updatedAt || '') || 0,
+          Date.parse(payload.trackingUpdatedAt || '') || 0
+        );
+        const localIsNewer = Boolean(
+          localOrder && localTime > cloudTime
+        );
 
         const mapped = {
           ...payload,
@@ -181,22 +201,27 @@
             (makeId() + makeId()),
           trackingUpdatedAt: co.updated_at || payload.trackingUpdatedAt || null,
           dueDate: co.due_date || payload.dueDate || co.service_date || null,
-          signed: co.signed ?? Boolean(payload.signed),
-          before: co.before_photo ?? Boolean(payload.before),
-          after: co.after_photo ?? Boolean(payload.after)
+          signed: localIsNewer
+            ? Boolean(localOrder.signed)
+            : (co.signed ?? Boolean(payload.signed)),
+          before: localIsNewer
+            ? Boolean(localOrder.before)
+            : (co.before_photo ?? Boolean(payload.before)),
+          after: localIsNewer
+            ? Boolean(localOrder.after)
+            : (co.after_photo ?? Boolean(payload.after)),
+          updatedAt: localIsNewer
+            ? localOrder.updatedAt
+            : (co.updated_at || payload.updatedAt || localOrder?.updatedAt || null)
         };
 
-        const idx = data.orders.findIndex(
-          o => String(o.id) === String(co.legacy_id)
-        );
-
         if (idx >= 0) {
-          data.orders[idx] = { ...data.orders[idx], ...mapped };
+          data.orders[idx] = { ...localOrder, ...mapped };
         } else {
           data.orders.push(mapped);
         }
       }
-
+       
       
       const employees = data.employees.map(e => ({
         legacy_id: String(e.id),
