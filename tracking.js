@@ -112,7 +112,7 @@
       // 1. Buscar primeiro os registros já existentes na nuvem.
       const { data: cloudEmployees, error: empReadErr } = await client()
         .from('osfiscal_employees')
-        .select('legacy_id,name,role_name,phone,active');
+        .select('legacy_id,name,role_name,phone,active,updated_at');
 
       if (empReadErr) throw empReadErr;
 
