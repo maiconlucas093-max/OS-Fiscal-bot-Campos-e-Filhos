@@ -209,13 +209,13 @@
        
         
 
-      if (employees.length) {
+            if (currentRole === 'manager' && employees.length) {
         const { error } = await client()
           .from('osfiscal_employees')
           .upsert(employees, { onConflict: 'legacy_id' });
 
         if (error) throw error;
-      }
+            }
 
       // 5. Enviar as OS mescladas, sem duplicar IDs.
       const orders = data.orders.map(o => ({
