@@ -121,59 +121,40 @@
 
       if (orderReadErr) throw orderReadErr;
 
+      
       // 2. Incorporar os funcionários da nuvem aos dados locais.
       for (const ce of (cloudEmployees || [])) {
         const idx = data.employees.findIndex(
           e => String(e.id) === String(ce.legacy_id)
         );
 
-        
-const localEmployee = idx >= 0 ? data.employees[idx] : null;
+        const localEmployee = idx >= 0 ? data.employees[idx] : null;
+        const localTime = Date.parse(localEmployee?.updatedAt || '') || 0;
+        const cloudTime = Date.parse(ce.updated_at || '') || 0;
+        const localIsNewer = Boolean(
+          localEmployee && localTime > cloudTime
+        );
 
-const localTime = Date.parse(localEmployee?.updatedAt || '') || 0;
-const cloudTime = Date.parse(ce.updated_at || '') || 0;
-const localIsNewer = Boolean(localEmployee && localTime > cloudTime);
-
-
-const localEmployee = idx >= 0 ? data.employees[idx] : null;
-
-const localTime = Date.parse(localEmployee?.updatedAt || '') || 0;
-const cloudTime = Date.parse(ce.updated_at || '') || 0;
-const localIsNewer = Boolean(localEmployee && localTime > cloudTime);
-
-const mapped = {
-  id: ce.legacy_id,
-  name: ce.name || 'Sem nome',
-  role: ce.role_name || '',
-  phone: ce.phone || '',
-  active: localIsNewer
-    ? Boolean(localEmployee.active)
-    : Boolean(ce.active),
-  updatedAt: localIsNewer
-    ? localEmployee.updatedAt
-    : (ce.updated_at || localEmployee?.updatedAt || null)
-};
-
-if (idx >= 0) {
-  data.employees[idx] = { ...localEmployee, ...mapped };
-} else {
-  data.employees.push(mapped);
-}
-         
-
-if (idx >= 0) {
-  data.employees[idx] = { ...localEmployee, ...mapped };
-} else {
-  data.employees.push(mapped);
-     }
-         
+        const mapped = {
+          id: ce.legacy_id,
+          name: ce.name || 'Sem nome',
+          role: ce.role_name || '',
+          phone: ce.phone || '',
+          active: localIsNewer
+            ? Boolean(localEmployee.active)
+            : Boolean(ce.active),
+          updatedAt: localIsNewer
+            ? localEmployee.updatedAt
+            : (ce.updated_at || localEmployee?.updatedAt || null)
+        };
 
         if (idx >= 0) {
-          data.employees[idx] = { ...data.employees[idx], ...mapped };
+          data.employees[idx] = { ...localEmployee, ...mapped };
         } else {
           data.employees.push(mapped);
         }
       }
+       
 
       // 3. Incorporar as OS da nuvem, sem duplicar identificadores.
       for (const co of (cloudOrders || [])) {
