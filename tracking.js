@@ -134,6 +134,13 @@ const localTime = Date.parse(localEmployee?.updatedAt || '') || 0;
 const cloudTime = Date.parse(ce.updated_at || '') || 0;
 const localIsNewer = Boolean(localEmployee && localTime > cloudTime);
 
+
+const localEmployee = idx >= 0 ? data.employees[idx] : null;
+
+const localTime = Date.parse(localEmployee?.updatedAt || '') || 0;
+const cloudTime = Date.parse(ce.updated_at || '') || 0;
+const localIsNewer = Boolean(localEmployee && localTime > cloudTime);
+
 const mapped = {
   id: ce.legacy_id,
   name: ce.name || 'Sem nome',
@@ -146,6 +153,13 @@ const mapped = {
     ? localEmployee.updatedAt
     : (ce.updated_at || localEmployee?.updatedAt || null)
 };
+
+if (idx >= 0) {
+  data.employees[idx] = { ...localEmployee, ...mapped };
+} else {
+  data.employees.push(mapped);
+}
+         
 
 if (idx >= 0) {
   data.employees[idx] = { ...localEmployee, ...mapped };
