@@ -259,7 +259,7 @@
     }
   }
 
-  function getQrUrl(order) { return orderLink(order); }
+  
 
   function getQrUrl(order) { return orderLink(order); }
   function showQr(order) {
