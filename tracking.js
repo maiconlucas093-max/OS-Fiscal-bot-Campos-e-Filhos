@@ -108,22 +108,153 @@
         $('trackingConnectionNotice').textContent = 'Conectado à base compartilhada. Exibindo somente as OS atribuídas ao seu usuário.';
         return;
       }
-      const employees = data.employees.map(e => ({ legacy_id:String(e.id), name:e.name || 'Sem nome', role_name:e.role || '', phone:e.phone || '', active:Boolean(e.active) }));
+      
+      // 1. Buscar primeiro os registros já existentes na nuvem.
+      const { data: cloudEmployees, error: empReadErr } = await client()
+        .from('osfiscal_employees')
+        .select('legacy_id,name,role_name,phone,active');
+
+      if (empReadErr) throw empReadErr;
+
+      const { data: cloudOrders, error: orderReadErr } = await client()
+        .from('osfiscal_orders')
+        .select('legacy_id,employee_legacy_id,code,service_date,description,location,notes,status,tracking_token,due_date,signed,before_photo,after_photo,legacy_payload,updated_at');
+
+      if (orderReadErr) throw orderReadErr;
+
+      // 2. Incorporar os funcionários da nuvem aos dados locais.
+      for (const ce of (cloudEmployees || [])) {
+        const idx = data.employees.findIndex(
+          e => String(e.id) === String(ce.legacy_id)
+        );
+
+        const mapped = {
+          id: ce.legacy_id,
+          name: ce.name || 'Sem nome',
+          role: ce.role_name || '',
+          phone: ce.phone || '',
+          active: ce.active
+        };
+
+        if (idx >= 0) {
+          data.employees[idx] = { ...data.employees[idx], ...mapped };
+        } else {
+          data.employees.push(mapped);
+        }
+      }
+
+      // 3. Incorporar as OS da nuvem, sem duplicar identificadores.
+      for (const co of (cloudOrders || [])) {
+        const payload =
+          co.legacy_payload &&
+          typeof co.legacy_payload === 'object'
+            ? co.legacy_payload
+            : {};
+
+        const mapped = {
+          ...payload,
+          id: co.legacy_id,
+          employeeId: co.employee_legacy_id,
+          trackingCode: payload.trackingCode || co.code || '',
+          date: payload.date || co.service_date || today(),
+          description:
+            payload.description || co.description || 'OS sincronizada',
+          location: payload.location || co.location || '',
+          notes: payload.notes || co.notes || '',
+          trackingStatus: co.status || payload.trackingStatus || 'waiting',
+          trackingToken:
+            co.tracking_token ||
+            payload.trackingToken ||
+            (makeId() + makeId()),
+          trackingUpdatedAt: co.updated_at || payload.trackingUpdatedAt || null,
+          dueDate: co.due_date || payload.dueDate || co.service_date || null,
+          signed: co.signed ?? Boolean(payload.signed),
+          before: co.before_photo ?? Boolean(payload.before),
+          after: co.after_photo ?? Boolean(payload.after)
+        };
+
+        const idx = data.orders.findIndex(
+          o => String(o.id) === String(co.legacy_id)
+        );
+
+        if (idx >= 0) {
+          data.orders[idx] = { ...data.orders[idx], ...mapped };
+        } else {
+          data.orders.push(mapped);
+        }
+      }
+
+      // 4. Enviar funcionários locais e recuperados para a nuvem.
+      const employees = data.employees.map(e => ({
+        legacy_id: String(e.id),
+        name: e.name || 'Sem nome',
+        role_name: e.role || '',
+        phone: e.phone || '',
+        active: Boolean(e.active)
+      }));
+
       if (employees.length) {
-        const { error } = await client().from('osfiscal_employees').upsert(employees, { onConflict:'legacy_id' });
+        const { error } = await client()
+          .from('osfiscal_employees')
+          .upsert(employees, { onConflict: 'legacy_id' });
+
         if (error) throw error;
       }
-      const orders = data.orders.map(o => ({ legacy_id:String(o.id), employee_legacy_id:String(o.employeeId), code:orderCode(o), service_date:o.date, description:o.description || '', location:o.location || '', notes:o.notes || '', status:statusOf(o), tracking_token:o.trackingToken, due_date:o.dueDate || o.date || null, signed:Boolean(o.signed), before_photo:Boolean(o.before), after_photo:Boolean(o.after), legacy_payload:o }));
+
+      // 5. Enviar as OS mescladas, sem duplicar IDs.
+      const orders = data.orders.map(o => ({
+        legacy_id: String(o.id),
+        employee_legacy_id: String(o.employeeId),
+        code: orderCode(o),
+        service_date: o.date,
+        description: o.description || '',
+        location: o.location || '',
+        notes: o.notes || '',
+        status: statusOf(o),
+        tracking_token: o.trackingToken,
+        due_date: o.dueDate || o.date || null,
+        signed: Boolean(o.signed),
+        before_photo: Boolean(o.before),
+        after_photo: Boolean(o.after),
+        legacy_payload: o
+      }));
+
       if (orders.length) {
-        const { error } = await client().from('osfiscal_orders').upsert(orders, { onConflict:'legacy_id' });
+        const { error } = await client()
+          .from('osfiscal_orders')
+          .upsert(orders, { onConflict: 'legacy_id' });
+
         if (error) throw error;
       }
-      const { data: evts, error: evErr } = await client().from('osfiscal_events').select('id,order_legacy_id,employee_legacy_id,action,detail,actor,created_at').order('created_at',{ascending:false}).limit(500);
+
+      // 6. Atualizar o histórico de movimentações.
+      const { data: evts, error: evErr } = await client()
+        .from('osfiscal_events')
+        .select('id,order_legacy_id,employee_legacy_id,action,detail,actor,created_at')
+        .order('created_at', { ascending: false })
+        .limit(500);
+
       if (evErr) throw evErr;
-      if (Array.isArray(evts)) data.trackingEvents = evts.map(e=>({id:e.id,orderId:e.order_legacy_id,employeeId:e.employee_legacy_id,action:e.action,detail:e.detail,actor:e.actor,at:e.created_at}));
+
+      if (Array.isArray(evts)) {
+        data.trackingEvents = evts.map(e => ({
+          id: e.id,
+          orderId: e.order_legacy_id,
+          employeeId: e.employee_legacy_id,
+          action: e.action,
+          detail: e.detail,
+          actor: e.actor,
+          at: e.created_at
+        }));
+      }
+
+      ensureTrackingData();
       originalSave();
-      $('trackingConnectionNotice').textContent = 'Conectado à base compartilhada. Os registros deste aparelho foram sincronizados; dados e permissões continuam sujeitos às regras do servidor.';
-    } finally { cloudSyncing = false; }
+      render();
+
+      $('trackingConnectionNotice').textContent =
+        `Conectado à base compartilhada. Sincronização concluída: ${(cloudOrders || []).length} OS recuperadas da nuvem; ${data.orders.length} OS disponíveis no painel.`;
+           
   }
   function getQrUrl(order) { return orderLink(order); }
   function showQr(order) {
