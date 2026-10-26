@@ -242,25 +242,42 @@
         if (error) throw error;
             }
 
-      // 5. Enviar as OS mescladas, sem duplicar IDs.
-      const orders = data.orders.map(o => ({
-        legacy_id: String(o.id),
-        employee_legacy_id: String(o.employeeId),
-        code: orderCode(o),
-        service_date: o.date,
-        description: o.description || '',
-        location: o.location || '',
-        notes: o.notes || '',
-        status: statusOf(o),
-        tracking_token: o.trackingToken,
-        due_date: o.dueDate || o.date || null,
-        signed: Boolean(o.signed),
-        before_photo: Boolean(o.before),
-        after_photo: Boolean(o.after),
-        legacy_payload: o
-      }));
+      
+      // 5. Enviar as OS mescladas, preservando a data da última alteração.
+      const orders = data.orders.map(o => {
+        const timestamps = [
+          o.updatedAt,
+          o.trackingUpdatedAt
+        ].filter(Boolean).sort();
+
+        return {
+          legacy_id: String(o.id),
+          employee_legacy_id: String(o.employeeId),
+          code: orderCode(o),
+          service_date: o.date,
+          description: o.description || '',
+          location: o.location || '',
+          notes: o.notes || '',
+          status: statusOf(o),
+          tracking_token: o.trackingToken,
+          due_date: o.dueDate || o.date || null,
+          signed: Boolean(o.signed),
+          before_photo: Boolean(o.before),
+          after_photo: Boolean(o.after),
+          updated_at: timestamps[timestamps.length - 1] || new Date().toISOString(),
+          legacy_payload: o
+        };
+      });
 
       if (orders.length) {
+        const { error } = await client()
+          .from('osfiscal_orders')
+          .upsert(orders, { onConflict: 'legacy_id' });
+
+        if (error) throw error;
+      }
+       
+       {
         const { error } = await client()
           .from('osfiscal_orders')
           .upsert(orders, { onConflict: 'legacy_id' });
